@@ -289,7 +289,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--llm-url", default=None, help="Override OpenAI-compatible base URL")
     parser.add_argument("--model", default=None, help="Override LLM model name")
     parser.add_argument("--api-key", default=None, help="Override LLM API key")
-    parser.add_argument("--lang", default="en", choices=["en", "tr"], help="Output language")
+    parser.add_argument("--lang", default="tr", choices=["tr", "en"], help="Output language")
     parser.add_argument("--skill-path", type=Path, default=DEFAULT_SKILL_PATH)
     parser.add_argument("--db-path", type=Path, default=DEFAULT_DB_PATH)
     parser.add_argument("--report-path", type=Path, default=DEFAULT_REPORT_PATH)
@@ -392,8 +392,20 @@ def main() -> int:
                 model_name=llm.model,
                 evaluated_at=evaluated_at,
                 include_markers=True,
+                language=args.lang,
             )
-            new_body = f"{clean_body.rstrip()}\n\n{block}\n"
+            if args.lang.lower().startswith("tr"):
+                # Place Turkish overview & paradigm analysis first, keeping original body below
+                stripped_body = clean_body.lstrip()
+                title_match = re.match(r"(# [^\n]+\n+)", stripped_body)
+                if title_match:
+                    heading = title_match.group(1)
+                    rest = stripped_body[len(heading) :].strip()
+                    new_body = f"{heading}{block}\n\n---\n\n### Orijinal İçerik (Referans)\n\n{rest}\n"
+                else:
+                    new_body = f"{block}\n\n---\n\n### Orijinal İçerik (Referans)\n\n{stripped_body.strip()}\n"
+            else:
+                new_body = f"{clean_body.rstrip()}\n\n{block}\n"
             rendered_page = f"{fm}{new_body}"
 
             written = False

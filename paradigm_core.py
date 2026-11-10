@@ -170,6 +170,7 @@ def evaluate_with_paradigm_skill(
         "Return ONLY a single valid JSON object (no markdown fences, no extra prose) "
         "with these exact keys:\n"
         "- domain: concise scientific domain/subfield\n"
+        "- turkish_summary: 2-4 sentence clear Turkish overview explaining the core idea and context\n"
         "- core_breakthrough: 1-2 sentence synthesis of what this item establishes\n"
         "- epistemic_mode: one of 'Human', 'AI-Assisted', 'Automated Black-Box', 'Hybrid'\n"
         "- current_paradigm_stage: one of 'Phase 1 (Data/Tycho)', 'Phase 2 (Pattern/Kepler)', 'Phase 3 (Mechanism/Newton)'\n"
@@ -233,35 +234,65 @@ def render_analysis_markdown(
     model_name: str,
     evaluated_at: str,
     include_markers: bool = True,
+    language: str = "tr",
 ) -> str:
-    """Render the evaluation block in standard Markdown."""
+    """Render the evaluation block in standard Markdown (Turkish or English)."""
     p1 = analysis.get("phase_1_data") or {}
     p2 = analysis.get("phase_2_pattern") or {}
     p3 = analysis.get("phase_3_mechanism") or {}
 
-    lines = [
-        "## Scientific Paradigm Analysis",
-        "",
-        f"- **Domain:** {analysis.get('domain', '—')}",
-        f"- **Core Breakthrough:** {analysis.get('core_breakthrough', '—')}",
-        f"- **Current Paradigm Stage:** {analysis.get('current_paradigm_stage', '—')} "
-        f"(Mechanistic Depth: {analysis.get('mechanistic_depth_score', '—')}/5)",
-        f"- **Epistemic Mode:** {analysis.get('epistemic_mode', '—')}",
-        f"- **Evaluated By:** `scientific-paradigm-analyzer` (`{model_name}`, {evaluated_at})",
-        "",
-        "| Phase | Historical Archetype | Findings | Agent | Reference |",
-        "| :--- | :--- | :--- | :--- | :--- |",
-        f"| **1. Data & Observation** | Tycho Brahe | {fmt_cell(p1.get('findings'))} | {fmt_cell(p1.get('agent'))} | {fmt_cell(p1.get('reference'))} |",
-        f"| **2. Pattern & Rule** | Kepler | {fmt_cell(p2.get('findings'))} | {fmt_cell(p2.get('agent'))} | {fmt_cell(p2.get('reference'))} |",
-        f"| **3. Mechanism & Proof** | Newton | {fmt_cell(p3.get('findings'))} | {fmt_cell(p3.get('agent'))} | {fmt_cell(p3.get('reference'))} |",
-        "",
-        "### Epistemic Shift & Understanding Gap",
-        f"- **Verification vs. Comprehension:** {analysis.get('verification_vs_comprehension', '—')}",
-        f"- **Black-Box Tension:** {analysis.get('black_box_tension', '—')}",
-        "",
-        "### Methodological Takeaway",
-        f"- {analysis.get('methodological_takeaway', '—')}",
-    ]
+    if language.lower().startswith("tr"):
+        tr_sum = str(analysis.get("turkish_summary") or "").strip()
+        summary_block = ["## Türkçe Özet", "", tr_sum, ""] if tr_sum else []
+        lines = [
+            *summary_block,
+            "## Bilimsel Paradigma Analizi",
+            "",
+            f"- **Alan:** {analysis.get('domain', '—')}",
+            f"- **Temel Kırılma / Bulgu:** {analysis.get('core_breakthrough', '—')}",
+            f"- **Mevcut Paradigma Aşaması:** {analysis.get('current_paradigm_stage', '—')} "
+            f"(Mekanistik Derinlik: {analysis.get('mechanistic_depth_score', '—')}/5)",
+            f"- **Epistemik Mod:** {analysis.get('epistemic_mode', '—')}",
+            f"- **Değerlendiren:** `scientific-paradigm-analyzer` (`{model_name}`, {evaluated_at})",
+            "",
+            "| Faz | Tarihsel Arketip | Bulgular | Etken | Kaynak |",
+            "| :--- | :--- | :--- | :--- | :--- |",
+            f"| **1. Veri ve Gözlem** | Tycho Brahe | {fmt_cell(p1.get('findings'))} | {fmt_cell(p1.get('agent'))} | {fmt_cell(p1.get('reference'))} |",
+            f"| **2. Desen ve Kural** | Kepler | {fmt_cell(p2.get('findings'))} | {fmt_cell(p2.get('agent'))} | {fmt_cell(p2.get('reference'))} |",
+            f"| **3. Mekanizma ve İspat** | Newton | {fmt_cell(p3.get('findings'))} | {fmt_cell(p3.get('agent'))} | {fmt_cell(p3.get('reference'))} |",
+            "",
+            "### Epistemik Kayma ve Anlama Boşluğu",
+            f"- **Doğrulama vs. Kavrama:** {analysis.get('verification_vs_comprehension', '—')}",
+            f"- **Kara Kutu Gerilimi:** {analysis.get('black_box_tension', '—')}",
+            "",
+            "### Metodolojik Çıkarım",
+            f"- {analysis.get('methodological_takeaway', '—')}",
+        ]
+    else:
+        lines = [
+            "## Scientific Paradigm Analysis",
+            "",
+            f"- **Domain:** {analysis.get('domain', '—')}",
+            f"- **Core Breakthrough:** {analysis.get('core_breakthrough', '—')}",
+            f"- **Current Paradigm Stage:** {analysis.get('current_paradigm_stage', '—')} "
+            f"(Mechanistic Depth: {analysis.get('mechanistic_depth_score', '—')}/5)",
+            f"- **Epistemic Mode:** {analysis.get('epistemic_mode', '—')}",
+            f"- **Evaluated By:** `scientific-paradigm-analyzer` (`{model_name}`, {evaluated_at})",
+            "",
+            "| Phase | Historical Archetype | Findings | Agent | Reference |",
+            "| :--- | :--- | :--- | :--- | :--- |",
+            f"| **1. Data & Observation** | Tycho Brahe | {fmt_cell(p1.get('findings'))} | {fmt_cell(p1.get('agent'))} | {fmt_cell(p1.get('reference'))} |",
+            f"| **2. Pattern & Rule** | Kepler | {fmt_cell(p2.get('findings'))} | {fmt_cell(p2.get('agent'))} | {fmt_cell(p2.get('reference'))} |",
+            f"| **3. Mechanism & Proof** | Newton | {fmt_cell(p3.get('findings'))} | {fmt_cell(p3.get('agent'))} | {fmt_cell(p3.get('reference'))} |",
+            "",
+            "### Epistemic Shift & Understanding Gap",
+            f"- **Verification vs. Comprehension:** {analysis.get('verification_vs_comprehension', '—')}",
+            f"- **Black-Box Tension:** {analysis.get('black_box_tension', '—')}",
+            "",
+            "### Methodological Takeaway",
+            f"- {analysis.get('methodological_takeaway', '—')}",
+        ]
     if include_markers:
         return "\n".join([START_MARKER, *lines, END_MARKER])
     return "\n".join(lines)
+

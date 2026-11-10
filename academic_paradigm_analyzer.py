@@ -507,6 +507,7 @@ def main() -> int:
                         model_name=llm.model,
                         evaluated_at=evaluated_at,
                         include_markers=False,
+                        language=args.lang,
                     )
                     save_article_evaluation(
                         conn,

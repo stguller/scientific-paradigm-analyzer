@@ -43,18 +43,18 @@ DEFAULT_TAR_PATH = REPO_ROOT / "data" / "keplr_wiki.tar.gz"
 PHASE_HUBS: dict[str, tuple[str, str, str]] = {
     "Phase 1": (
         "entities/phase-1-data-tycho",
-        "Phase 1: Data & Observation (Tycho Brahe)",
-        "Empirical data collection, raw measurements, sensor datasets, and benchmark observations without inferred rules or causal laws.",
+        "Faz 1: Veri ve Gözlem (Tycho Brahe)",
+        "Çıkarımsal kurallar veya nedensel yasalar olmadan ampirik veri toplama, ham ölçümler, sensör veri setleri ve gözlem kayıtları.",
     ),
     "Phase 2": (
         "entities/phase-2-pattern-kepler",
-        "Phase 2: Pattern & Rule (Kepler)",
-        "Empirical regularities, correlations, statistical fits, and predictive AI/ML surrogates extracted from data without first-principles causal explanation.",
+        "Faz 2: Desen ve Kural (Kepler)",
+        "Birincil ilkelerden nedensel açıklama olmadan veriden çıkarılan ampirik düzenlilikler, korelasyonlar, istatistiksel uyumlar ve yapay zeka/makine öğrenmesi vekil modelleri.",
     ),
     "Phase 3": (
         "entities/phase-3-mechanism-newton",
-        "Phase 3: Mechanism & Proof (Newton)",
-        "Causal mechanisms, unifying theoretical laws, and formally verified proofs (e.g., Lean theorem proving).",
+        "Faz 3: Mekanizma ve İspat (Newton)",
+        "Nedensel mekanizmalar, birleştirici teorik yasalar ve biçimsel olarak doğrulanmış ispatlar (ör. Lean teorem ispatlayıcıları).",
     ),
 }
 
@@ -99,7 +99,7 @@ def build_phase_entities(wiki_dir: Path) -> None:
             "---\n\n"
             f"# {title}\n\n"
             f"{desc}\n\n"
-            "All concepts and research papers classified at this paradigm tier link to this hub.\n"
+            "Bu paradigma aşamasında sınıflandırılan tüm konseptler ve akademik makaleler bu merkeze bağlanır.\n"
         )
         (ent_dir / f"{slug}.md").write_text(content, encoding="utf-8")
 
@@ -214,6 +214,7 @@ def export_articles(pg_cfg: dict[str, Any], wiki_dir: Path) -> list[dict[str, An
             model_name=model_name or "gemini-3-flash",
             evaluated_at=eval_at or "",
             include_markers=True,
+            language="tr",
         )
 
         body_parts = [
@@ -228,12 +229,12 @@ def export_articles(pg_cfg: dict[str, Any], wiki_dir: Path) -> list[dict[str, An
             "",
             f"# {baslik or slug}",
             "",
-            "## Metadata",
+            "## Künye",
             f"- **Makale ID:** `{mid}`",
             f"- **DOI:** {doi or '—'} | **arXiv:** {arxiv_id or '—'}",
             f"- **Dergi / Konferans:** {venue or '—'} ({pub_date or '—'})",
             f"- **Keşif Kaynağı:** {kesif or '—'} | **Judge Skoru:** {judge if judge is not None else '—'}",
-            f"- **Paradigm Hub:** [[{phase_ref}]]",
+            f"- **Paradigma Merkezi:** [[{phase_ref}]]",
             "",
         ]
         if ozet:
@@ -274,11 +275,11 @@ def write_reports_and_index(
 
     # 1. OpenKB Concepts Report
     c_lines = [
-        "# OpenKB Concepts — Scientific Paradigm Analysis Report",
+        "# OpenKB Konseptleri — Bilimsel Paradigma Analiz Raporu",
         "",
-        f"> **Total Evaluated Concepts:** {len(concepts)} | **Generated:** {now_str}",
+        f"> **Değerlendirilen Toplam Konsept:** {len(concepts)} | **Tarih:** {now_str}",
         "",
-        "| Concept | Domain | Stage | Depth | Epistemic Mode | Black-Box / Gap |",
+        "| Konsept | Alan | Aşama | Derinlik | Epistemik Mod | Kara Kutu / Anlama Boşluğu |",
         "| :--- | :--- | :--- | :---: | :--- | :--- |",
     ]
     for c in sorted(concepts, key=lambda x: (-int(x["depth"]), x["id"])):
@@ -292,11 +293,11 @@ def write_reports_and_index(
 
     # 2. Academic Articles Report
     a_lines = [
-        "# SU+AI Academic Pipeline — Scientific Paradigm Analysis Report",
+        "# SU+AI Akademik Pipeline — Bilimsel Paradigma Analiz Raporu",
         "",
-        f"> **Total Evaluated Articles:** {len(articles)} | **Generated:** {now_str}",
+        f"> **Değerlendirilen Toplam Makale:** {len(articles)} | **Tarih:** {now_str}",
         "",
-        "| Article | Title | Domain | Stage | Depth | Epistemic Mode | Black-Box / Gap |",
+        "| Makale | Başlık | Alan | Aşama | Derinlik | Epistemik Mod | Kara Kutu / Anlama Boşluğu |",
         "| :--- | :--- | :--- | :--- | :---: | :--- | :--- |",
     ]
     for a in sorted(articles, key=lambda x: (-int(x["depth"]), -int(x["makale_id"]))):
@@ -310,26 +311,26 @@ def write_reports_and_index(
 
     # 3. index.md
     idx_lines = [
-        "# Knowledge Base Index: Keplr Scientific Paradigm Analyzer",
+        "# Bilgi Tabanı Dizini: Keplr Bilimsel Paradigma Analizörü",
         "",
-        f"> **Evaluated Concepts:** {len(concepts)} | **Evaluated Academic Articles:** {len(articles)} | **Updated:** {now_str}",
+        f"> **Değerlendirilen Konseptler:** {len(concepts)} | **Değerlendirilen Akademik Makaleler:** {len(articles)} | **Güncelleme:** {now_str}",
         "",
         "## Explorations",
-        "- [[reports/openkb_concepts_paradigm_report]] — 954 OpenKB Concepts Paradigm Matrix",
-        "- [[reports/academic_articles_paradigm_report]] — 625 Academic Pipeline Articles Paradigm Matrix",
+        "- [[reports/openkb_concepts_paradigm_report]] — 954 OpenKB Konsepti Paradigma Matrisi",
+        "- [[reports/academic_articles_paradigm_report]] — 625 Akademik Pipeline Makalesi Paradigma Matrisi",
         "",
         "## Entities",
     ]
     for _, (ref, title, desc) in PHASE_HUBS.items():
         idx_lines.append(f"- [[{ref}]] — {desc}")
 
-    idx_lines.extend(["", f"## Documents ({len(articles)} Academic Pipeline Articles)", ""])
+    idx_lines.extend(["", f"## Documents ({len(articles)} Akademik Pipeline Makalesi)", ""])
     for a in articles:
         idx_lines.append(
             f"- [[{a['id']}]] (`{a['stage']}`, {a['depth']}/5) — {str(a['title'])[:110]}"
         )
 
-    idx_lines.extend(["", f"## Concepts ({len(concepts)} OpenKB Concepts)", ""])
+    idx_lines.extend(["", f"## Concepts ({len(concepts)} OpenKB Konsepti)", ""])
     for c in concepts:
         idx_lines.append(
             f"- [[{c['id']}]] (`{c['stage']}`, {c['depth']}/5) — {str(c['description'])[:110]}"
@@ -339,9 +340,9 @@ def write_reports_and_index(
 
     # 4. log.md
     log_entry = (
-        f"# Keplr KB Log\n\n"
-        f"- **{now_str}**: Published {len(concepts)} concepts + {len(articles)} academic articles "
-        f"evaluated via `scientific-paradigm-analyzer` (`gemini-3-flash` via CLIProxyAPI).\n"
+        f"# Keplr Bilgi Tabanı Günlüğü\n\n"
+        f"- **{now_str}**: `scientific-paradigm-analyzer` (`gemini-3-flash` / CLIProxyAPI) ile değerlendirilen "
+        f"{len(concepts)} konsept ve {len(articles)} akademik makale Türkçe olarak yayınlandı.\n"
     )
     (wiki_dir / "log.md").write_text(log_entry, encoding="utf-8")
 
@@ -380,9 +381,10 @@ def deploy_tar_to_msi(
 
         cmd = (
             f"mkdir -p {remote_wiki_dir} && "
+            f"rm -rf {remote_wiki_dir}/concepts/* {remote_wiki_dir}/summaries/* {remote_wiki_dir}/entities/* {remote_wiki_dir}/reports/* && "
             f"tar -xzf {remote_tar} -C {remote_wiki_dir} && "
             f"rm -f {remote_tar} && "
-            f"sed -i 's/^model:.*/model: gemini-3-flash/' /home/msi/keplr/.openkb/config.yaml || true"
+            f"sed -i 's/^model:.*/model: gemini-3-flash/; s/^language:.*/language: tr/' /home/msi/keplr/.openkb/config.yaml || true"
         )
         _, stdout, stderr = ssh.exec_command(cmd, timeout=120)
         rc = stdout.channel.recv_exit_status()
@@ -440,3 +442,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
