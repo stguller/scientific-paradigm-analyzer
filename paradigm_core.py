@@ -79,6 +79,15 @@ def resolve_api_key(provider: str, explicit_key: str | None) -> str:
         if env_name and os.getenv(env_name):
             return os.environ[env_name].strip()
 
+    local_env = REPO_ROOT / ".env"
+    if local_env.is_file():
+        for line in local_env.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = line.strip()
+            if "=" in line and not line.startswith("#"):
+                k, v = line.split("=", 1)
+                if k.strip() in ("LLM_API_KEY", preset.get("env_key", ""), "OPENAI_API_KEY") and v.strip():
+                    return v.strip().strip("'\"")
+
     hermes_dir = Path.home() / ".hermes"
     key_file = hermes_dir / "api-keys" / "api_key.txt"
     hermes_key_name = preset.get("hermes_key", provider)

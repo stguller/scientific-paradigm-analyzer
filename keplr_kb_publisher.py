@@ -394,6 +394,29 @@ def deploy_tar_to_msi(
         ssh.close()
 
 
+def deploy_local_wiki(*, stage_dir: Path, remote_wiki_dir: str) -> None:
+    """Copy staged wiki directly to local directory when running on MSI itself."""
+    target = Path(remote_wiki_dir)
+    target.mkdir(parents=True, exist_ok=True)
+    for sub in ("concepts", "summaries", "entities", "reports"):
+        dst_sub = target / sub
+        if dst_sub.exists():
+            shutil.rmtree(dst_sub)
+        src_sub = stage_dir / sub
+        if src_sub.exists():
+            shutil.copytree(src_sub, dst_sub)
+    for fname in ("index.md", "log.md"):
+        src_f = stage_dir / fname
+        if src_f.is_file():
+            shutil.copy2(src_f, target / fname)
+    cfg_file = target.parent / ".openkb" / "config.yaml"
+    if cfg_file.is_file():
+        cfg_txt = cfg_file.read_text(encoding="utf-8")
+        cfg_txt = re.sub(r"^model:.*$", "model: gemini-3-flash", cfg_txt, flags=re.MULTILINE)
+        cfg_txt = re.sub(r"^language:.*$", "language: tr", cfg_txt, flags=re.MULTILINE)
+        cfg_file.write_text(cfg_txt, encoding="utf-8")
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build & deploy evaluated data into /home/msi/keplr/wiki.")
     parser.add_argument("--db-path", type=Path, default=DEFAULT_DB_PATH)
@@ -409,6 +432,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ssh-port", type=int, default=22)
     parser.add_argument("--ssh-user", default=None)
     parser.add_argument("--ssh-password", default=None)
+    parser.add_argument("--local-deploy", action="store_true", help="Copy directly to --remote-wiki-dir on local host")
     parser.add_argument("--no-deploy", action="store_true", help="Only build local staged wiki directory")
     return parser.parse_args()
 
@@ -427,7 +451,12 @@ def main() -> int:
 
     print(f"📦 Staged keplr wiki: {len(concepts)} concepts, {len(articles)} articles -> {args.stage_dir}")
 
-    if not args.no_deploy:
+    if args.no_deploy:
+        return 0
+    if args.local_deploy or Path(args.remote_wiki_dir).exists():
+        deploy_local_wiki(stage_dir=args.stage_dir, remote_wiki_dir=args.remote_wiki_dir)
+        print(f"🚀 Deployed locally to {args.remote_wiki_dir}")
+    else:
         ssh_cfg = resolve_ssh_config(args)
         deploy_tar_to_msi(
             stage_dir=args.stage_dir,

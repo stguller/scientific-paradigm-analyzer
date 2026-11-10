@@ -81,6 +81,7 @@ def resolve_pg_config(args: argparse.Namespace) -> dict[str, Any]:
     if not cfg["password"]:
         hermes_dir = Path.home() / ".hermes"
         env_candidates = [
+            REPO_ROOT / ".env",
             hermes_dir / "90_projeler" / "academic-pipeline-v2" / ".env",
             hermes_dir / ".env",
         ]
