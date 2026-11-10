@@ -131,6 +131,7 @@ def init_db(db_path: Path) -> sqlite3.Connection:
             current_paradigm_stage TEXT,
             mechanistic_depth_score INTEGER,
             analysis_json TEXT NOT NULL,
+            rendered_page TEXT,
             written_to_openkb INTEGER NOT NULL DEFAULT 0,
             model TEXT,
             evaluated_at TEXT NOT NULL,
@@ -138,6 +139,9 @@ def init_db(db_path: Path) -> sqlite3.Connection:
         )
         """
     )
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(concept_evaluations)").fetchall()}
+    if "rendered_page" not in cols:
+        conn.execute("ALTER TABLE concept_evaluations ADD COLUMN rendered_page TEXT")
     conn.commit()
     return conn
 
@@ -161,6 +165,7 @@ def save_checkpoint(
     description: str,
     sources: list[str],
     analysis: dict[str, Any] | None,
+    rendered_page: str | None,
     written: bool,
     model: str,
     evaluated_at: str,
@@ -174,8 +179,8 @@ def save_checkpoint(
             INSERT INTO concept_evaluations (
                 concept_id, kb, description, sources_json, domain, epistemic_mode,
                 current_paradigm_stage, mechanistic_depth_score, analysis_json,
-                written_to_openkb, model, evaluated_at, error
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                rendered_page, written_to_openkb, model, evaluated_at, error
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(concept_id) DO UPDATE SET
                 kb=excluded.kb,
                 description=excluded.description,
@@ -185,6 +190,7 @@ def save_checkpoint(
                 current_paradigm_stage=excluded.current_paradigm_stage,
                 mechanistic_depth_score=excluded.mechanistic_depth_score,
                 analysis_json=excluded.analysis_json,
+                rendered_page=excluded.rendered_page,
                 written_to_openkb=excluded.written_to_openkb,
                 model=excluded.model,
                 evaluated_at=excluded.evaluated_at,
@@ -200,6 +206,7 @@ def save_checkpoint(
                 a.get("current_paradigm_stage"),
                 a.get("mechanistic_depth_score"),
                 json.dumps(a, ensure_ascii=False),
+                rendered_page,
                 1 if written else 0,
                 model,
                 evaluated_at,
@@ -352,7 +359,7 @@ def main() -> int:
             if args.only_missing and START_MARKER in raw_md:
                 return cid, False, "skipped_marker_exists"
 
-            _, body = split_frontmatter(raw_md)
+            fm, body = split_frontmatter(raw_md)
             clean_body = strip_existing_analysis_block(body)
             sources_str = ", ".join(sources) if sources else "None listed"
             user_prompt = (
@@ -387,6 +394,7 @@ def main() -> int:
                 include_markers=True,
             )
             new_body = f"{clean_body.rstrip()}\n\n{block}\n"
+            rendered_page = f"{fm}{new_body}"
 
             written = False
             if not args.dry_run:
@@ -401,6 +409,7 @@ def main() -> int:
                 description=desc,
                 sources=sources,
                 analysis=analysis,
+                rendered_page=rendered_page,
                 written=written,
                 model=llm.model,
                 evaluated_at=evaluated_at,
@@ -415,6 +424,7 @@ def main() -> int:
                 description=desc,
                 sources=sources,
                 analysis=None,
+                rendered_page=None,
                 written=False,
                 model=llm.model,
                 evaluated_at=evaluated_at,
